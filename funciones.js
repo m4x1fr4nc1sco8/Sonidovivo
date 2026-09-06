@@ -13,7 +13,7 @@ const productos = [
     { id: "BE002", nombre: "Bajo Eléctrico Jazz Bass Squier Affinity JB", categoria: "Bajos Eléctricos", precio: 289990, stock: 3, img: "https://lacasadelmusico.cl/wp-content/uploads/2022/10/1644360192_0918.jpg" },
     { id: "BE003", nombre: "Bajo Eléctrico 5 Cuerdas Yamaha TRBX305", categoria: "Bajos Eléctricos", precio: 389990, stock: 2, img: "https://cdnx.jumpseller.com/instruments/image/70527976/thumb/1440/1440?1765304502" },
     { id: "BE004", nombre: "Bajo Eléctrico Precision Bass Squier Classic Vibe 60s PB", categoria: "Bajos Eléctricos", precio: 419990, stock: 2, img: "https://audiomusicacl.vtexassets.com/arquivos/ids/197179-1200-auto?v=638726506944030000&width=1200&height=auto&aspect=true" },
-    { id: "BE005", nombre: "Bajo Activo 4 Cuerdas Cort Action Bass Plus", categoria: "Bajos Eléctricos", precio: 199990, stock: 5, img: "https://gamamusic.com/cdn/shop/files/HCAJ1NT-2.webp?v=1779468075&width=800" },
+    { id: "BE005", nombre: "Bajo Activo 4 Cuerdas Cort Action Bass Plus", categoria: "Bajos Eléctricos", precio: 199990, stock: 5, img: "https://rgstore.cl/cdn/shop/files/rgmusic_img_2025_prod_001-600x600.webp?v=1772197720" },
     { id: "BAT01", nombre: "Batería Acústica 5 Piezas Pearl Export EXX725", categoria: "Baterías", precio: 649990, stock: 2, img: "https://arthurmusic.cl/cdn/shop/files/Export_20EXX725SPC21.jpg?v=1776881607&width=3840" },
     { id: "BAT02", nombre: "Batería Electrónica Roland TD-02KV", categoria: "Baterías", precio: 499990, stock: 3, img: "https://audiomusicacl.vtexassets.com/arquivos/ids/208391-1200-auto?v=639069303453000000&width=1200&height=auto&aspect=true" },
     { id: "BAT03", nombre: "Batería Electrónica Alesis Nitro Max Kit", categoria: "Baterías", precio: 389990, stock: 4, img: "https://cl-cenco-pim-resizer.ecomm.cencosud.com/unsafe/adaptive-fit-in/640x0/filters:quality(75)/prd-cl/product-medias/041e5141-f5f1-4a95-9b26-8897b370c22e/MKEU8Z70BT/MKEU8Z70BT-1/1734377898863-MKEU8Z70BT-1-1.jpg" },
@@ -75,7 +75,7 @@ function cargarProductos(lista) {
                         <p class="card-text text-muted mb-1">Cat: ${p.categoria}</p>
                         <p class="fw-bold text-success mb-2">$${p.precio.toLocaleString('es-CL')}</p>
                         <p class="small text-${p.stock > 0 ? 'secondary' : 'danger'} mb-3">Stock disponible: ${p.stock}</p>
-                        <button class="btn btn-primary mt-auto btn-sm" onclick="agregarAlCarrito(${p.id})">
+                        <button class="btn btn-primary mt-auto btn-sm" onclick="agregarAlCarrito('${p.id}')">
                             Agregar al carrito
                         </button>
                     </div>
@@ -196,8 +196,8 @@ function renderizarTablaVendedor() {
                     <td>$${p.precio.toLocaleString('es-CL')}</td>
                     <td><span class="badge ${p.stock > 0 ? 'bg-success' : 'bg-danger'}">${p.stock} un.</span></td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="modificarStock(${p.id}, 1)">+1</button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="modificarStock(${p.id}, -1)">-1</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="modificarStock('${p.id}', 1)">+1</button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="modificarStock('${p.id}', -1)">-1</button>
                     </td>
                 </tr>
             `;
@@ -245,6 +245,7 @@ function cambiarEstadoPedido(id, nuevoEstado) {
 
 // Función auxiliar para validar el RUT chileno (módulo 11)
 function validarRut(rut) {
+    // Elimina puntos, guiones y espacios
     rut = rut.replace(/[^0-9kK]/g, '');
     if (rut.length < 8) return false;
 
@@ -315,7 +316,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Unificado: Validación y Envío del Formulario de Checkout
+ // Unificado: Validación y Envío del Formulario de Checkout
     const checkoutForm = document.getElementById("checkout-form");
     if (checkoutForm) {
         checkoutForm.addEventListener("submit", (e) => {
@@ -331,28 +332,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Validar RUT
             if (rutInput && !validarRut(rutInput)) {
-                alert("El RUT ingresado no es válido. Por favor verifica el formato (ej: 12.345.678-9).");
+                alert("El RUT ingresado no es válido. Por favor verifica el número y dígito verificador.");
                 return;
             }
 
-            // Validar Teléfono Chileno (9 dígitos o con +56)
-            const phoneRegex = /^(\+?56)?(\s?)(0?9)(\s?)[0-9]{8}$/;
-            if (phoneInput && !phoneRegex.test(phoneInput)) {
-                alert("Por favor ingresa un número de teléfono válido (ej: +56 9 1234 5678).");
+            // Limpiar teléfono para permitir cualquier formato de espacios/guiones
+            const phoneLimpio = phoneInput.replace(/[^0-9+]/g, '');
+            // Valida +569XXXXXXXX o 9XXXXXXXX (9 dígitos comenzando con 9)
+            const phoneRegex = /^(\+?56)?9\d{8}$/;
+
+            if (phoneInput && !phoneRegex.test(phoneLimpio)) {
+                alert("Por favor ingresa un número de teléfono válido (ej: +56 9 1234 5678 o 912345678).");
                 return;
             }
 
             const nuevoCodigo = `SV-${1001 + pedidos.length}`;
-            const nombreCliente = document.getElementById("client-name").value;
-            const transporte = document.getElementById("delivery-method").value;
+            const nombreCliente = document.getElementById("client-name")?.value || "Cliente Sin Nombre";
+            const transporte = document.getElementById("delivery-method")?.value || "Por definir";
             const totalPedido = carrito.reduce((sum, item) => sum + item.precio, 0);
 
             pedidos.push({
-                id: nuevoCodigo,
-                cliente: nombreCliente,
-                transporte: transporte,
-                estado: "Pendiente de Validación",
-                total: totalPedido
+            id: nuevoCodigo,
+            cliente: `${nombreCliente} (${rutInput})`, // Muestra el nombre y el RUT juntos
+            transporte: transporte,
+            estado: "Pendiente de Validación",
+            total: totalPedido
             });
 
             carrito = [];

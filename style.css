@@ -1,0 +1,40 @@
+:root {
+    --primary-color: #1a1a2e;
+    --accent-color: #e94560;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.hero-section {
+    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+                url('https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1200&q=80');
+    background-size: cover;
+    background-position: center;
+    padding: 80px 0;
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+/* Tamaño obligatorio para el contenedor del mapa */
+#map {
+    height: 400px;
+    width: 100%;
+    border-radius: 8px;
+    z-index: 1;
+}
+
+/* Ajustes para dispositivos móviles */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 40px 0;
+    }
+    #map {
+        height: 300px;
+    }
+}

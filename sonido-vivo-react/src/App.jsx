@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import { ProductCard } from './components/ProductCard';
 import { VendorPanel } from './views/VendorPanel';
 import CartModal from './components/CartModal';
+import { AdminPanel } from './components/AdminPanel';
 import {
   getProductos,
   getPedidos,
@@ -31,18 +32,17 @@ export function App() {
   }, []);
 
   // Manejo del Carrito
-  // 1. Agregar producto y descontar 1 de stock
   const handleAddToCart = (producto) => {
     if (producto.stock <= 0) return;
 
-    // Descuenta 1 al stock visible en el catálogo
     setProductos((prevProductos) =>
       prevProductos.map((p) =>
         p.id === producto.id ? { ...p, stock: p.stock - 1 } : p
       )
     );
+    
 
-    // Añade al carrito
+
     setCarrito((prevCarrito) => {
       const existe = prevCarrito.find((item) => item.id === producto.id);
       if (existe) {
@@ -56,23 +56,19 @@ export function App() {
     });
   };
 
-  // 2. Eliminar ítem completo del carrito y devolver todo su stock
   const handleRemoveFromCart = (productId) => {
     const itemAEliminar = carrito.find((item) => item.id === productId);
     if (!itemAEliminar) return;
 
-    // Devuelve la cantidad eliminada al stock del catálogo
     setProductos((prevProductos) =>
       prevProductos.map((p) =>
         p.id === productId ? { ...p, stock: p.stock + itemAEliminar.cantidad } : p
       )
     );
 
-    // Saca el producto del carrito
     setCarrito((prevCarrito) => prevCarrito.filter((item) => item.id !== productId));
   };
 
-  // 3. Reducir de a 1 unidad dentro del carrito devolviendo 1 al stock
   const handleDecreaseQuantity = (productId) => {
     const item = carrito.find((i) => i.id === productId);
     if (!item) return;
@@ -95,10 +91,19 @@ export function App() {
     );
   };
 
+  const handleCheckoutSuccess = (nuevoPedido) => {
+    setPedidos((prev) => [nuevoPedido, ...prev]);
+    setCarrito([]);
+  };
+
   // Manejo de Inventario y Pedidos
   const handleUpdateStock = (id, nuevoStock) => {
     updateStockProducto(id, nuevoStock);
     setProductos(getProductos());
+  };
+
+  const handleDeleteProduct = (id) => {
+    setProductos((prev) => prev.filter((p) => p.id !== id));
   };
 
   const handleChangeOrderStatus = (id, nuevoEstado) => {
@@ -107,9 +112,14 @@ export function App() {
   };
 
   // Búsqueda de Tracking
-  const handleConsultarTracking = () => {
+  const handleConsultarTracking = (e) => {
+    e.preventDefault();
     const cod = codigoTracking.trim().toUpperCase();
-    const pedidoEncontrado = pedidos.find((p) => p.id === cod);
+    if (!cod) return;
+
+    const pedidoEncontrado = pedidos.find(
+      (p) => String(p.id).toUpperCase() === cod
+    );
     setTrackingResultado(pedidoEncontrado || 'no_encontrado');
   };
 
@@ -160,6 +170,7 @@ export function App() {
         </div>
       </header>
 
+
       {currentUser?.role === 'Vendedor' && (
         <VendorPanel
           productos={productos}
@@ -169,6 +180,81 @@ export function App() {
         />
       )}
 
+      {currentUser?.role === 'Administrador' && (
+        <AdminPanel
+          productos={productos}
+          pedidos={pedidos}
+          onUpdateStock={handleUpdateStock}
+          onChangeOrderStatus={handleChangeOrderStatus}
+          onAddProduct={(nuevo) => setProductos([nuevo, ...productos])}
+          onDeleteProduct={handleDeleteProduct} 
+        />
+      )}
+
+
+      
+
+      {/* SECCIÓN DE CONSULTA DE TRACKING */}
+      <section className="bg-light py-5 border-bottom" id="tracking">
+        <div className="container">
+          <div className="row justify-content-center">
+            <div className="col-md-8 col-lg-6 text-center">
+              <h3 className="fw-bold mb-3">🔍 Consulta el Estado de tu Pedido</h3>
+              <p className="text-muted mb-4">
+                Ingresa el código de seguimiento que recibiste al finalizar tu compra para ver el estado del envío.
+              </p>
+              
+              <form onSubmit={handleConsultarTracking} className="d-flex gap-2 mb-4">
+                <input
+                  type="text"
+                  className="form-control form-control-lg"
+                  placeholder="Ej: SV-123456"
+                  value={codigoTracking}
+                  onChange={(e) => setCodigoTracking(e.target.value)}
+                  required
+                />
+                <button type="submit" className="btn btn-primary btn-lg fw-bold px-4">
+                  Buscar
+                </button>
+              </form>
+
+              {/* RESULTADO DE LA BÚSQUEDA */}
+              {trackingResultado === 'no_encontrado' && (
+                <div className="alert alert-danger" role="alert">
+                  ❌ No se encontró ningún pedido asociado al código <strong>{codigoTracking}</strong>.
+                </div>
+              )}
+
+              {trackingResultado && trackingResultado !== 'no_encontrado' && (
+                <div className="card text-start shadow-sm border-0">
+                  <div className="card-header bg-success text-white fw-bold d-flex justify-content-between align-items-center">
+                    <span>Pedido: {trackingResultado.id}</span>
+                    <span className="badge bg-light text-dark">{trackingResultado.estado}</span>
+                  </div>
+                  <div className="card-body">
+                    <p className="mb-1"><strong>Cliente:</strong> {trackingResultado.cliente}</p>
+                    <p className="mb-1"><strong>Fecha:</strong> {trackingResultado.fecha}</p>
+                    <p className="mb-1"><strong>Dirección:</strong> {trackingResultado.direccion}</p>
+                    <p className="mb-3"><strong>Total:</strong> ${Number(trackingResultado.total).toLocaleString('es-CL')}</p>
+                    
+                    <h6 className="fw-bold border-bottom pb-1">Productos del Pedido:</h6>
+                    <ul className="list-group list-group-flush small">
+                      {trackingResultado.items?.map((item, idx) => (
+                        <li key={idx} className="list-group-item d-flex justify-content-between px-0">
+                          <span>{item.nombre} (x{item.cantidad})</span>
+                          <span>${(item.precio * item.cantidad).toLocaleString('es-CL')}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CATÁLOGO DE PRODUCTOS */}
       <div className="container my-5" id="catalogo">
         <h2 className="text-center mb-4">Catálogo de Productos</h2>
         <div className="d-flex justify-content-center gap-2 mb-4">
@@ -218,6 +304,7 @@ export function App() {
         onRemoveFromCart={handleRemoveFromCart}
         onAddToCart={handleAddToCart}
         onDecreaseQuantity={handleDecreaseQuantity}
+        onCheckoutSuccess={handleCheckoutSuccess}
       />
     </div>
   );

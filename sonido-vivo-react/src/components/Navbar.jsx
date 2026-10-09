@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Navbar = ({ currentUser, setCurrentUser, carritoCount = 0 }) => {
+const Navbar = ({ currentUser, setCurrentUser, carritoCount = 0, onOpenCart }) => {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
       <div className="container">
@@ -27,7 +27,10 @@ const Navbar = ({ currentUser, setCurrentUser, carritoCount = 0 }) => {
           </ul>
 
           <div className="d-flex align-items-center gap-3">
-            <button className="btn btn-outline-warning position-relative">
+            <button 
+              className="btn btn-outline-warning position-relative"
+              onClick={onOpenCart}
+            >
               🛒 Carrito
               {carritoCount > 0 && (
                 <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">

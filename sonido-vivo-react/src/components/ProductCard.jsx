@@ -1,35 +1,45 @@
 import React from 'react';
 
-export const ProductCard = ({ product, onAddToCart }) => {
+export function ProductCard({ product, onAddToCart }) {
+  if (!product) return null;
+
+  const { nombre, precio, categoria, stock } = product;
+  
+  // Soporta cualquier nombre de propiedad que traiga la imagen desde db.js
+  const imgSrc = product.imagen || product.img || product.image || 'https://via.placeholder.com/200';
+
   return (
-    <div className="col-md-4 col-lg-3 mb-4">
-      <div className="card h-100 shadow-sm border-0">
+    <div className="card h-100 shadow-sm border-0">
+      <div className="text-center p-3 bg-white" style={{ height: '200px' }}>
         <img
-          src={product.img || 'https://via.placeholder.com/300x200?text=Sin+Imagen'}
-          className="card-img-top p-3"
-          alt={product.nombre}
-          style={{ height: '200px', objectFit: 'contain' }}
+          src={imgSrc}
+          className="img-fluid h-100"
+          alt={nombre}
+          style={{ objectFit: 'contain' }}
         />
-        <div className="card-body d-flex flex-column">
-          <span className="badge bg-secondary mb-2 align-self-start">{product.categoria}</span>
-          <h5 className="card-title text-truncate">{product.nombre}</h5>
-          <p className="card-text fw-bold text-success fs-5">
-            ${product.precio?.toLocaleString('es-CL')}
-          </p>
-          <div className="mt-auto">
-            <p className={`small mb-2 ${product.stock > 0 ? 'text-muted' : 'text-danger fw-bold'}`}>
-              {product.stock > 0 ? `Stock: ${product.stock} un.` : 'Agotado'}
-            </p>
-            <button
-              className="btn btn-primary w-100"
-              onClick={() => onAddToCart(product)}
-              disabled={product.stock <= 0}
-            >
-              {product.stock > 0 ? 'Agregar al carrito' : 'Sin Stock'}
-            </button>
-          </div>
+      </div>
+      <div className="card-body d-flex flex-column bg-light">
+        <div className="mb-2">
+          <span className="badge bg-secondary">{categoria}</span>
         </div>
+        <h5 className="card-title fw-bold text-dark">{nombre}</h5>
+        
+        <p className="card-text fs-4 fw-bold text-success my-2">
+          ${Number(precio).toLocaleString('es-CL')}
+        </p>
+        
+        <p className="card-text text-muted small mb-3">
+          Stock disponible: <strong>{stock}</strong> un.
+        </p>
+
+        <button
+          className="btn btn-primary mt-auto w-100 fw-semibold py-2"
+          onClick={() => onAddToCart(product)}
+          disabled={stock <= 0}
+        >
+          {stock > 0 ? 'Agregar al carrito' : 'Sin Stock'}
+        </button>
       </div>
     </div>
   );
-};
+}
